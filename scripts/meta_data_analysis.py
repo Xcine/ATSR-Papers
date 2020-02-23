@@ -37,6 +37,7 @@ minutes = [int(line[11:13]) for line in line_utt2spk_clean]
 seconds = [int(line[13:15]) for line in line_utt2spk_clean]
 
 """
+#check errors in input
 for x in years:
     if(x<2000 or x >2020):
         print(x)
@@ -61,12 +62,15 @@ for x in seconds:
     if(x<0 or x >59):
         print(x)
 """
+
 i = 0
 for x in hours:
     if(x >19 or x < 6):
         i+=1
 print("Number of utterances: ",len(hours))
 print("Number of utterances after 19pm and before 6am: ",i)
+
+
 plt.hist(hours, bins=20)
 plt.xlabel("Speech Start of the Day (Only the Hour)")
 plt.ylabel("Number of Utterances (190000 of Total Utterances)")
