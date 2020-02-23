@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import re
+import datetime
+import matplotlib.pyplot as plt
+
+#path = "../data/malfong/train/"
+#path_audio = "../data/audio/"
+#path_utt2spk = "../data/malfong/train/utt2spk"
+path_utt2spk = "utt2spk"
+
+file_utt2spk = open(path_utt2spk, 'r')
+line_utt2spk = file_utt2spk.readlines()
+line_utt2spk_clean = [re.sub(r'.*rad', '', line).split("_")[0] for line in line_utt2spk]
+
+
+print(line_utt2spk_clean[0:5])
+
+years = [int(line[0:4]) for line in line_utt2spk_clean]
+months = [int(line[4:6]) for line in line_utt2spk_clean]
+days = [int(line[6:8]) for line in line_utt2spk_clean]
+hours = [int(line[9:11]) for line in line_utt2spk_clean]
+minutes = [int(line[11:13]) for line in line_utt2spk_clean]
+seconds = [int(line[13:15]) for line in line_utt2spk_clean]
+
+"""
+for x in years:
+    if(x<2000 or x >2020):
+        print(x)
+
+for x in months:
+    if(x<1 or x >12):
+        print(x)
+
+for x in days:
+    if(x<1 or x >31):
+        print(x)
+
+for x in hours:
+    if(x<0 or x >23):
+        print(x)
+
+for x in minutes:
+    if(x<0 or x >59):
+        print(x)
+
+for x in seconds:
+    if(x<0 or x >59):
+        print(x)
+"""
+i = 0
+for x in hours:
+    if(x >19 or x < 6):
+        i+=1
+print(i)
+print(len(hours))
+plt.hist(hours, bins=20)
+plt.xlabel("Speech Start of the Day (Only the Hour)")
+plt.ylabel("Number of Utterances (190000 of Total Utterances)")
+plt.savefig("meta.pdf")
+
