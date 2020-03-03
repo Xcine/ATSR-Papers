@@ -7,7 +7,7 @@
 . ./path.sh
 set -e
 
-stage=0
+stage=2
 nj=2
 mfccdir=`pwd`/data/mfcc
 
@@ -50,5 +50,11 @@ if [ $stage -le 1 ]; then
   echo "Extracting list of successfully transcribed utterances into tri4_ali_$part/filesOK.scp"
   cut -d' ' -f1 tri4_ali_$part/all.ctm | sort -u > tri4_ali_$part/filesOK.scp
 
+fi
+
+if [ $stage -le 2 ]; then
+  path="tri4_ali_malfong/train_little"
+  utils/int2sym.pl -f 5 $path/phones.txt $path/all.ctm > $path/allp.ctm
+  echo "Phonemes instead of ids wirtten"
 fi
 
