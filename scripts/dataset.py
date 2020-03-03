@@ -72,11 +72,94 @@ class DataSet:
         print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path)
         print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
 
+    def select_data_same_spkr(self, output_feats_path, time=1):
+
+        time_collected_sd = 0
+        time_collected_n = 0
+
+        collected_sd = {}
+
+        with open(output_feats_path, "w") as f:
+            for i,line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 22 or hour <= 5) and time_collected_sd <= time*3600:
+                    f.write(line)
+                    time_collected_sd += self.line_time_dif[i]
+                    if spkr in collected_sd.keys():
+                        collected_sd[spkr] += self.line_time_dif[i]
+                    else:
+                        collected_sd[spkr] = self.line_time_dif[i]
+
+        print(collected_sd)
+
+        with open(output_feats_path, "w") as f:
+            for i, line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 9 and hour <= 18) and (time_collected_n <= time * 3600) and spkr in collected_sd.keys():
+
+                    if collected_sd[spkr] > 0:
+                        f.write(line)
+                        time_collected_n += self.line_time_dif[i]
+                        collected_sd[spkr] -= self.line_time_dif[i]
+
+        print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path)
+        print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
+
+    def select_data_of_number_spkr(self, output_feats_path, nb_spkr=5, time=1):
+
+        time_collected_sd = 0
+        time_collected_n = 0
+
+        collected_sd = {}
+
+        with open(output_feats_path, "w") as f:
+            for i,line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 22 or hour <= 5) and time_collected_sd <= time*3600:
+                    f.write(line)
+                    time_collected_sd += self.line_time_dif[i]
+                    if spkr in collected_sd.keys():
+                        collected_sd[spkr] += self.line_time_dif[i]
+                    else:
+                        collected_sd[spkr] = self.line_time_dif[i]
+
+        print(collected_sd)
+
+        with open(output_feats_path, "w") as f:
+            for i, line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 9 and hour <= 18) and (time_collected_n <= time * 3600) and spkr in collected_sd.keys():
+
+                    if collected_sd[spkr] > 0:
+                        f.write(line)
+                        time_collected_n += self.line_time_dif[i]
+                        collected_sd[spkr] -= self.line_time_dif[i]
+
+        print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path)
+        print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
+
     def get_label(self, hour):
         if (hour >= 22 or hour <= 5):
             return 1
         elif (hour >= 9 and hour <= 18):
             return 0
+
 
     def get_mean_duration(self):
         mean_duration_n = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0])
