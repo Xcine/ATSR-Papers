@@ -3,20 +3,23 @@
 # Script to force-align utterances, using HMM-GMM model. 
 # Relies on kaldi
 
-. ./cmd.sh
+#. ./cmd.sh
 . ./path.sh
 set -e
 
 stage=2
-nj=2
-mfccdir=`pwd`/data/mfcc
+nj=4
+mfccdir=`pwd`/mfcc
+
+train_cmd="utils/run.pl"
 
 echo "$0 $@"  # Print the command line for logging
 . utils/parse_options.sh || exit 1;
 
 
-cont=$1
-part=$(basename $cont | cut -f 1 -d '.')
+#cont=$1
+#part=$(basename $cont | cut -f 1 -d '.')
+part="malfong/train_little"
 echo ============================================================================
 echo "                Data Preparation			                        "
 echo ============================================================================
