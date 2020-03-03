@@ -55,6 +55,10 @@ if [ $stage -le 1 ]; then
 
 fi
 
+echo ============================================================================
+echo "		                 Getting phoneme from int                        "
+echo ============================================================================
+
 if [ $stage -le 2 ]; then
   path="tri4_ali_malfong/train_little"
   utils/int2sym.pl -f 5 $path/phones.txt $path/all.ctm > $path/allp.ctm
