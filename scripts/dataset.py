@@ -1,9 +1,13 @@
 import re
 import numpy as np
 import pandas as pd
+import pickle
+from os import path
 
 class DataSet:
     def __init__(self, path_spk2gender, path_segments, path_feats, ctm_path):
+        self.ctm_id = ctm_path.split(".")[0]
+
         file_seg = open(path_segments, 'r')
         line_seg = file_seg.readlines()
         self.seg_id = [line.split(" ")[0] for line in line_seg]
@@ -162,34 +166,45 @@ class DataSet:
 
 
     def get_mean_duration(self):
-        mean_duration_n = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0])
-        mean_duration_sd = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 1])
 
-        return mean_duration_n,mean_duration_sd
+        if(path.exists(self.ctm_id + ".pkl")):
+            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl"))
+            return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"]
+        else:
+            mean_duration_n = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0])
+            mean_duration_sd = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 1])
+            return mean_duration_n,mean_duration_sd
 
     def get_mean_of_all_phonemes(self):
-        phoneme_list = {}
 
-        for i,row in self.ctm_data.iterrows():
-            key = row["phoneme"] #+ "_" + str(bool(row["sd label"]))
-            if key in phoneme_list.keys():
-                phoneme_list[key].append([row["duration"],row["sd label"]])
-            else:
-                phoneme_list[key] = [[row["duration"],row["sd label"]]]
+        if(path.exists(self.ctm_id + ".pkl")):
+            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl"))
+            return self.pickle_data["means_phoneme_list"]
+        else:
+            phoneme_list = {}
 
-        means_list = []
-        for key in phoneme_list.keys():
+            for i,row in self.ctm_data.iterrows():
+                key = row["phoneme"] #+ "_" + str(bool(row["sd label"]))
+                if key in phoneme_list.keys():
+                    phoneme_list[key].append([row["duration"],row["sd label"]])
+                else:
+                    phoneme_list[key] = [[row["duration"],row["sd label"]]]
 
-            sd_list = [x[0] for x in phoneme_list[key] if x[1] == 1]
-            n_list = [x[0] for x in phoneme_list[key] if x[1] == 0]
+            means_list = []
+            for key in phoneme_list.keys():
 
-            if(len(sd_list)!=0 and len(n_list)!=0):
-                means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list))])
-            #print(key, np.mean(n_list), np.mean(sd_list))
+                sd_list = [x[0] for x in phoneme_list[key] if x[1] == 1]
+                n_list = [x[0] for x in phoneme_list[key] if x[1] == 0]
 
+                if(len(sd_list)!=0 and len(n_list)!=0):
+                    means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list))])
+                #print(key, np.mean(n_list), np.mean(sd_list))
 
+            mean_dur_n, mean_dur_sd = self.get_mean_duration()
+            pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "means_phoneme_list": means_list}
+            pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "w"))
 
-        return means_list
+            return means_list
 
 
 
