@@ -98,9 +98,8 @@ class DataSet:
                     else:
                         collected_sd[spkr] = self.line_time_dif[i]
 
-        print(collected_sd)
+            print(collected_sd)
 
-        with open(output_feats_path, "w") as f:
             for i, line in enumerate(self.line_feats):
 
                 spkr = line.split("-")[0]
@@ -168,7 +167,7 @@ class DataSet:
     def get_mean_duration(self):
 
         if(path.exists(self.ctm_id + ".pkl")):
-            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl"))
+            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
             return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"]
         else:
             mean_duration_n = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0])
@@ -178,8 +177,8 @@ class DataSet:
     def get_mean_of_all_phonemes(self):
 
         if(path.exists(self.ctm_id + ".pkl")):
-            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl"))
-            return self.pickle_data["means_phoneme_list"]
+            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
+            return self.pickle_data
         else:
             phoneme_list = {}
 
@@ -202,7 +201,7 @@ class DataSet:
 
             mean_dur_n, mean_dur_sd = self.get_mean_duration()
             pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "means_phoneme_list": means_list}
-            pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "w"))
+            pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "wb"))
 
             return means_list
 
