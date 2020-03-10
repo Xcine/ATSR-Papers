@@ -116,12 +116,14 @@ class DataSet:
         print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path)
         print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
 
-    def select_data_of_number_spkr(self, output_feats_path, nb_spkr=5, time=1):
+
+    def select_data_max_spkr(self, output_feats_path):
 
         time_collected_sd = 0
         time_collected_n = 0
 
         collected_sd = {}
+        collected_sd_max = {}
 
         with open(output_feats_path, "w") as f:
             for i,line in enumerate(self.line_feats):
@@ -130,32 +132,48 @@ class DataSet:
                 line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
                 hour = int(line_feats_clean[9:11])
 
-                if (hour >= 22 or hour <= 5) and time_collected_sd <= time*3600:
-                    f.write(line)
-                    time_collected_sd += self.line_time_dif[i]
+                if (hour >= 22 or hour <= 5):
                     if spkr in collected_sd.keys():
                         collected_sd[spkr] += self.line_time_dif[i]
                     else:
                         collected_sd[spkr] = self.line_time_dif[i]
 
-        print(collected_sd)
+            max_spkr = max(collected_sd, key=collected_sd.get)
+            max_value = max(collected_sd.values())
+            print("max spkr + value: ", max_spkr, max_value)
 
-        with open(output_feats_path, "w") as f:
             for i, line in enumerate(self.line_feats):
 
                 spkr = line.split("-")[0]
                 line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
                 hour = int(line_feats_clean[9:11])
 
-                if (hour >= 9 and hour <= 18) and (time_collected_n <= time * 3600) and spkr in collected_sd.keys():
+                if (hour >= 22 or hour <= 5) and spkr==max_spkr:
+                    f.write(line)
+                    time_collected_sd += self.line_time_dif[i]
+                    if spkr in collected_sd_max.keys():
+                        collected_sd_max[spkr] += self.line_time_dif[i]
+                    else:
+                        collected_sd_max[spkr] = self.line_time_dif[i]
 
-                    if collected_sd[spkr] > 0:
+            print(collected_sd_max)
+
+            for i, line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 9 and hour <= 18) and spkr in collected_sd_max.keys():
+
+                    if collected_sd_max[spkr] > 0:
                         f.write(line)
                         time_collected_n += self.line_time_dif[i]
-                        collected_sd[spkr] -= self.line_time_dif[i]
+                        collected_sd_max[spkr] -= self.line_time_dif[i]
 
         print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path)
         print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
+
 
     def get_label(self, hour):
         if (hour >= 22 or hour <= 5):
@@ -163,31 +181,37 @@ class DataSet:
         elif (hour >= 9 and hour <= 18):
             return 0
 
-
     def get_mean_duration(self):
 
         if(path.exists(self.ctm_id + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
-            return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"]
+            return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"],self.pickle_data["var_dur_n"], self.pickle_data["var_dur_sd"]
         else:
-            mean_duration_n = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0])
-            mean_duration_sd = np.mean([row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 1])
-            return mean_duration_n,mean_duration_sd
+            mean_list_n = [row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0]
+            mean_list_sd = [row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 1]
+            mean_duration_n = np.mean(mean_list_n)
+            mean_duration_sd = np.mean(mean_list_sd)
+            var_duration_n = np.var(mean_list_n)
+            var_duration_sd = np.var(mean_list_sd)
+            return mean_duration_n,mean_duration_sd,var_duration_n,var_duration_sd
 
-    def get_mean_of_all_phonemes(self):
+    def get_mean_of_all_phonemes(self, use_mono_phone, use_sil):
 
         if(path.exists(self.ctm_id + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
-            return self.pickle_data
+            return self.pickle_data["means_phoneme_list"]
         else:
             phoneme_list = {}
 
             for i,row in self.ctm_data.iterrows():
-                key = row["phoneme"] #+ "_" + str(bool(row["sd label"]))
+                if use_mono_phone:
+                    key = row["phoneme"].split("_")[0]
+                else:
+                    key = row["phoneme"]
                 if key in phoneme_list.keys():
                     phoneme_list[key].append([row["duration"],row["sd label"]])
-                else:
-                    phoneme_list[key] = [[row["duration"],row["sd label"]]]
+                elif use_sil or (not use_sil and key != "sil"):
+                        phoneme_list[key] = [[row["duration"],row["sd label"]]]
 
             means_list = []
             for key in phoneme_list.keys():
@@ -197,10 +221,9 @@ class DataSet:
 
                 if(len(sd_list)!=0 and len(n_list)!=0):
                     means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list))])
-                #print(key, np.mean(n_list), np.mean(sd_list))
 
-            mean_dur_n, mean_dur_sd = self.get_mean_duration()
-            pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "means_phoneme_list": means_list}
+            mean_dur_n, mean_dur_sd, var_dur_n, var_dur_sd = self.get_mean_duration()
+            pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "var_dur_n": var_dur_n, "var_dur_sd": var_dur_sd, "means_phoneme_list": means_list}
             pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "wb"))
 
             return means_list
