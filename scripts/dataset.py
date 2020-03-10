@@ -51,7 +51,7 @@ class DataSet:
         self.ctm_data.pop("channel")
         self.ctm_data.pop("X")
         self.ctm_data["sd label"] = [self.get_label(int(re.sub(r'.*rad', '', line).split("_")[0][9:11])) for line in self.ctm_data["ID"]]
-        print(self.ctm_data)
+        #print(self.ctm_data)
 
 
     def select_data(self, output_feats_path, time=1):
@@ -183,7 +183,7 @@ class DataSet:
 
     def get_mean_duration(self, use_mono_phone, use_sil, all_sils):
 
-        if(path.exists(self.ctm_id + ".pkl")):
+        if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
             return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"],self.pickle_data["var_dur_n"], self.pickle_data["var_dur_sd"]
         else:
@@ -209,7 +209,7 @@ class DataSet:
 
     def get_mean_of_all_phonemes(self, use_mono_phone, use_sil, all_sils):
 
-        if(path.exists(self.ctm_id + ".pkl")):
+        if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
             return self.pickle_data["means_phoneme_list"]
         else:
@@ -240,7 +240,7 @@ class DataSet:
 
             mean_dur_n, mean_dur_sd, var_dur_n, var_dur_sd = self.get_mean_duration(use_mono_phone,use_sil,all_sils)
             pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "var_dur_n": var_dur_n, "var_dur_sd": var_dur_sd, "means_phoneme_list": means_list}
-            pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "wb"))
+            pickle.dump(pickel_data, open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "wb"))
 
             return means_list
 
