@@ -183,6 +183,7 @@ class DataSet:
 
     def get_mean_duration(self, use_mono_phone, use_sil, all_sils):
 
+        """
         if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
             return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"],self.pickle_data["var_dur_n"], self.pickle_data["var_dur_sd"]
@@ -206,12 +207,31 @@ class DataSet:
                 var_duration_n = np.var(mean_list_n)
                 var_duration_sd = np.var(mean_list_sd)
                 return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
+        """
+
+        if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
+            self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
+            phoneme_list = self.pickle_data["phoneme_list"]
+            sd_list = []
+            n_list = []
+            for key in phoneme_list.keys():
+                sd_list += [x[0] for x in phoneme_list[key] if x[1] == 1]
+                n_list += [x[0] for x in phoneme_list[key] if x[1] == 0]
+
+            mean_duration_n = np.mean(n_list)
+            mean_duration_sd = np.mean(sd_list)
+            var_duration_n = np.var(n_list)
+            var_duration_sd = np.var(sd_list)
+            return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
+        else:
+            raise ValueError("run get_mean_of_all_phonemes() first!")
+
 
     def get_mean_of_all_phonemes(self, use_mono_phone, use_sil, all_sils):
 
         if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
-            return self.pickle_data["means_phoneme_list"]
+            return self.pickle_data["means_phoneme_list"], self.pickle_data["phoneme_list"]
         else:
             phoneme_list = {}
             last_sil_ind = self.ctm_data["ID"][0].split("_")[1]
@@ -236,13 +256,35 @@ class DataSet:
                 n_list = [x[0] for x in phoneme_list[key] if x[1] == 0]
 
                 if(len(sd_list)!=0 and len(n_list)!=0):
-                    means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list))])
+                    means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list)),float(np.var(n_list)), float(np.var(sd_list))])
 
-            mean_dur_n, mean_dur_sd, var_dur_n, var_dur_sd = self.get_mean_duration(use_mono_phone,use_sil,all_sils)
-            pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "var_dur_n": var_dur_n, "var_dur_sd": var_dur_sd, "means_phoneme_list": means_list}
+            pickel_data = {"means_phoneme_list": means_list, "phoneme_list": phoneme_list}
             pickle.dump(pickel_data, open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "wb"))
 
             return means_list
+
+
+    def analyse_sil(self, all_sils):
+
+        for use_mono_phone in [True,False]:
+
+            if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(True)) + "_" + str(int(all_sils)) + ".pkl")):
+                self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(True)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
+                phoneme_list = self.pickle_data["phoneme_list"]
+                sd_list = []
+                n_list = []
+                for key in phoneme_list.keys():
+                    sd_list += [x[0] for x in phoneme_list[key] if (x[1] == 1 and key == "sil")]
+                    n_list += [x[0] for x in phoneme_list[key] if (x[1] == 0  and key == "sil")]
+
+                mean_duration_n = np.mean(n_list)
+                mean_duration_sd = np.mean(sd_list)
+                var_duration_n = np.var(n_list)
+                var_duration_sd = np.var(sd_list)
+                return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
+            else:
+                raise ValueError("run get_mean_of_all_phonemes() first!")
+
 
 
 
