@@ -51,7 +51,7 @@ class DataSet:
         self.ctm_data.pop("channel")
         self.ctm_data.pop("X")
         self.ctm_data["sd label"] = [self.get_label(int(re.sub(r'.*rad', '', line).split("_")[0][9:11])) for line in self.ctm_data["ID"]]
-        #print(self.ctm_data)
+        print(self.ctm_data)
 
 
     def select_data(self, output_feats_path, time=1):
@@ -181,37 +181,53 @@ class DataSet:
         elif (hour >= 9 and hour <= 18):
             return 0
 
-    def get_mean_duration(self):
+    def get_mean_duration(self, use_mono_phone, use_sil, all_sils):
 
         if(path.exists(self.ctm_id + ".pkl")):
-            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
+            self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
             return self.pickle_data["mean_dur_n"], self.pickle_data["mean_dur_sd"],self.pickle_data["var_dur_n"], self.pickle_data["var_dur_sd"]
         else:
-            mean_list_n = [row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 0]
-            mean_list_sd = [row["duration"] for i,row in self.ctm_data.iterrows() if row["sd label"] == 1]
-            mean_duration_n = np.mean(mean_list_n)
-            mean_duration_sd = np.mean(mean_list_sd)
-            var_duration_n = np.var(mean_list_n)
-            var_duration_sd = np.var(mean_list_sd)
-            return mean_duration_n,mean_duration_sd,var_duration_n,var_duration_sd
+            if use_sil:
+                if all_sils:
+                    mean_list_n = [row["duration"] for i,row in self.ctm_data.iterrows() if (row["sd label"] == 0)]
+                    mean_list_sd = [row["duration"] for i,row in self.ctm_data.iterrows() if (row["sd label"] == 1)]
+                    mean_duration_n = np.mean(mean_list_n)
+                    mean_duration_sd = np.mean(mean_list_sd)
+                    var_duration_n = np.var(mean_list_n)
+                    var_duration_sd = np.var(mean_list_sd)
+                    return mean_duration_n,mean_duration_sd,var_duration_n,var_duration_sd
+                else:
+                    raise ValueError("not implemented yet")
+            else:
+                mean_list_n = [row["duration"] for i, row in self.ctm_data.iterrows() if (row["sd label"] == 0 and row["phoneme" != "sil"])]
+                mean_list_sd = [row["duration"] for i, row in self.ctm_data.iterrows() if (row["sd label"] == 1 and row["phoneme" != "sil"])]
+                mean_duration_n = np.mean(mean_list_n)
+                mean_duration_sd = np.mean(mean_list_sd)
+                var_duration_n = np.var(mean_list_n)
+                var_duration_sd = np.var(mean_list_sd)
+                return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
 
-    def get_mean_of_all_phonemes(self, use_mono_phone, use_sil):
+    def get_mean_of_all_phonemes(self, use_mono_phone, use_sil, all_sils):
 
         if(path.exists(self.ctm_id + ".pkl")):
-            self.pickle_data = pickle.load(open(self.ctm_id + ".pkl", "rb"))
+            self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
             return self.pickle_data["means_phoneme_list"]
         else:
             phoneme_list = {}
-
+            last_sil_ind = self.ctm_data["ID"][0].split("_")[1]
             for i,row in self.ctm_data.iterrows():
-                if use_mono_phone:
-                    key = row["phoneme"].split("_")[0]
+                cur_sil_ind = row["ID"].split("_")[1]
+                if all_sils or ((i != 0) and (cur_sil_ind == last_sil_ind)):
+                    if use_mono_phone:
+                        key = row["phoneme"].split("_")[0]
+                    else:
+                        key = row["phoneme"]
+                    if key in phoneme_list.keys():
+                        phoneme_list[key].append([row["duration"],row["sd label"]])
+                    elif use_sil or (not use_sil and key != "sil"):
+                            phoneme_list[key] = [[row["duration"],row["sd label"]]]
                 else:
-                    key = row["phoneme"]
-                if key in phoneme_list.keys():
-                    phoneme_list[key].append([row["duration"],row["sd label"]])
-                elif use_sil or (not use_sil and key != "sil"):
-                        phoneme_list[key] = [[row["duration"],row["sd label"]]]
+                    last_sil_ind = cur_sil_ind
 
             means_list = []
             for key in phoneme_list.keys():
@@ -222,7 +238,7 @@ class DataSet:
                 if(len(sd_list)!=0 and len(n_list)!=0):
                     means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list))])
 
-            mean_dur_n, mean_dur_sd, var_dur_n, var_dur_sd = self.get_mean_duration()
+            mean_dur_n, mean_dur_sd, var_dur_n, var_dur_sd = self.get_mean_duration(use_mono_phone,use_sil,all_sils)
             pickel_data = {"mean_dur_n": mean_dur_n, "mean_dur_sd": mean_dur_sd, "var_dur_n": var_dur_n, "var_dur_sd": var_dur_sd, "means_phoneme_list": means_list}
             pickle.dump(pickel_data, open(self.ctm_id + ".pkl", "wb"))
 

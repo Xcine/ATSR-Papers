@@ -15,5 +15,5 @@ path_ctm = "metadata/ctm/allp_random_2h.ctm"
 
 ds = DataSet(path_spk2gender, path_segments, path_feats, path_ctm)
 
-ds.select_data_max_spkr(path_featsx)
+#ds.select_data_max_spkr(path_featsx)
 
