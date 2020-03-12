@@ -175,6 +175,66 @@ class DataSet:
         print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path)
 
 
+    def select_data_max_spkr_WER(self, output_feats_path_sd, output_feats_path_n):
+
+        time_collected_sd = 0
+        time_collected_n = 0
+
+        collected_sd = {}
+        collected_sd_max = {}
+
+        with open(output_feats_path_sd, "w") as f:
+            for i,line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour <= 5 or hour >= 23):
+                    if spkr in collected_sd.keys():
+                        collected_sd[spkr] += self.line_time_dif[i]
+                    else:
+                        collected_sd[spkr] = self.line_time_dif[i]
+
+            max_spkr = max(collected_sd, key=collected_sd.get)
+            max_value = max(collected_sd.values())
+            print("max spkr + value: ", max_spkr, max_value)
+
+            for i, line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 23 or hour <= 5) and spkr==max_spkr:
+                    f.write(line)
+                    time_collected_sd += self.line_time_dif[i]
+                    if spkr in collected_sd_max.keys():
+                        collected_sd_max[spkr] += self.line_time_dif[i]
+                    else:
+                        collected_sd_max[spkr] = self.line_time_dif[i]
+
+            print(collected_sd_max)
+
+        with open(output_feats_path_n, "w") as f:
+
+            for i, line in enumerate(self.line_feats):
+
+                spkr = line.split("-")[0]
+                line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
+                hour = int(line_feats_clean[9:11])
+
+                if (hour >= 8 and hour <= 13) and spkr in collected_sd_max.keys():
+
+                    if collected_sd_max[spkr] > 0:
+                        f.write(line)
+                        time_collected_n += self.line_time_dif[i]
+                        collected_sd_max[spkr] -= self.line_time_dif[i]
+
+        print("Written " + str(time_collected_sd) + "s of sleep deprication data to " + output_feats_path_sd)
+        print("Written " + str(time_collected_n) + "s of normal data to " + output_feats_path_n)
+
+
     def get_label(self, hour):
         if (hour >= 22 or hour <= 5):
             return 1
