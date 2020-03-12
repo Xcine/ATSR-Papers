@@ -132,7 +132,7 @@ class DataSet:
                 line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
                 hour = int(line_feats_clean[9:11])
 
-                if (hour >= 22 or hour <= 5):
+                if (hour <= 5 or hour >= 23):
                     if spkr in collected_sd.keys():
                         collected_sd[spkr] += self.line_time_dif[i]
                     else:
@@ -148,7 +148,7 @@ class DataSet:
                 line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
                 hour = int(line_feats_clean[9:11])
 
-                if (hour >= 22 or hour <= 5) and spkr==max_spkr:
+                if (hour >= 23 or hour <= 5) and spkr==max_spkr:
                     f.write(line)
                     time_collected_sd += self.line_time_dif[i]
                     if spkr in collected_sd_max.keys():
@@ -164,7 +164,7 @@ class DataSet:
                 line_feats_clean = re.sub(r'.*rad', '', line).split("_")[0]
                 hour = int(line_feats_clean[9:11])
 
-                if (hour >= 9 and hour <= 18) and spkr in collected_sd_max.keys():
+                if (hour >= 8 and hour <= 13) and spkr in collected_sd_max.keys():
 
                     if collected_sd_max[spkr] > 0:
                         f.write(line)
@@ -242,7 +242,7 @@ class DataSet:
                         key = row["phoneme"].split("_")[0]
                     else:
                         key = row["phoneme"]
-                    if key in phoneme_list.keys():
+                    if key in phoneme_list.keys() and (not ("oov" in key)):
                         phoneme_list[key].append([row["duration"],row["sd label"]])
                     elif use_sil or (not use_sil and key != "sil"):
                             phoneme_list[key] = [[row["duration"],row["sd label"]]]
