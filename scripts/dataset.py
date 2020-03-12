@@ -231,6 +231,8 @@ class DataSet:
 
         if(path.exists(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl")):
             self.pickle_data = pickle.load(open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "rb"))
+            print("oov instances sd: ", self.pickle_data["oov_sd"])
+            print("oov instances n: ", self.pickle_data["oov_n"])
             return self.pickle_data["means_phoneme_list"], self.pickle_data["phoneme_list"]
         else:
             phoneme_list = {}
@@ -242,7 +244,7 @@ class DataSet:
                         key = row["phoneme"].split("_")[0]
                     else:
                         key = row["phoneme"]
-                    if key in phoneme_list.keys() and (not ("oov" in key)):
+                    if key in phoneme_list.keys():# and (not ("oov" in key)):
                         phoneme_list[key].append([row["duration"],row["sd label"]])
                     elif use_sil or (not use_sil and key != "sil"):
                             phoneme_list[key] = [[row["duration"],row["sd label"]]]
@@ -255,10 +257,20 @@ class DataSet:
                 sd_list = [x[0] for x in phoneme_list[key] if x[1] == 1]
                 n_list = [x[0] for x in phoneme_list[key] if x[1] == 0]
 
-                if(len(sd_list)!=0 and len(n_list)!=0):
+                if "oov" in key:
+                    print(key)
+                    oov_sd = len(sd_list)
+                    oov_n = len(n_list)
+                    print("oov instances sd: ", len(sd_list))
+                    print("oov instances n: ", len(n_list))
+                elif (len(sd_list)!=0 and len(n_list)!=0):
                     means_list.append([key, float(np.mean(n_list)), float(np.mean(sd_list)),float(np.var(n_list)), float(np.var(sd_list))])
 
-            pickel_data = {"means_phoneme_list": means_list, "phoneme_list": phoneme_list}
+            phoneme_list.pop('oov', None)
+            phoneme_list.pop('oov_S', None)
+            phoneme_list.pop('oov_E', None)
+            phoneme_list.pop('oov_I', None)
+            pickel_data = {"means_phoneme_list": means_list, "phoneme_list": phoneme_list, "oov_sd": oov_sd, "oov_n": oov_n}
             pickle.dump(pickel_data, open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "wb"))
 
             return means_list
