@@ -2,7 +2,10 @@ import re
 import numpy as np
 import pandas as pd
 import pickle
+import matplotlib.pyplot as plt
 from os import path
+import collections
+from matplotlib.lines import Line2D
 
 class DataSet:
     def __init__(self, path_spk2gender, path_segments, path_feats, ctm_path):
@@ -356,6 +359,56 @@ class DataSet:
                 return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
             else:
                 raise ValueError("run get_mean_of_all_phonemes() first!")
+
+
+    def analyse_speaker_dist(self, path_ctm_spkr):
+
+        ctm_spkr = pd.read_csv(path_ctm_spkr, sep=" ", header=None, names=["ID","channel","starttime","duration","phoneme", "X"])
+        ctm_spkr.pop("channel")
+        ctm_spkr.pop("X")
+        ctm_spkr["sd label"] = [self.get_label(int(re.sub(r'.*rad', '', line).split("_")[0][9:11])) for line in ctm_spkr["ID"]]
+        ctm_spkr["hour"] = [int(re.sub(r'.*rad', '', line).split("_")[0][9:11]) for line in ctm_spkr["ID"]]
+        spkr_id = ctm_spkr["ID"][0].split("-")[0]
+
+        time_sd = np.sum([row["duration"] for i,row in ctm_spkr.iterrows() if (row["sd label"] == 1)])
+        time_n = np.sum([row["duration"] for i, row in ctm_spkr.iterrows() if (row["sd label"] == 0)])
+        print("Speaker: ", spkr_id)
+        print("Time in seconds of normal state: ", time_n)
+        print("Time in seconds of sleep deprivation: ", time_sd)
+
+        hours_dict = {}
+        for i, row in ctm_spkr.iterrows():
+            key = row["hour"]
+            if key in hours_dict.keys():
+                hours_dict[key] += row["duration"]
+            else:
+                hours_dict[key] = row["duration"]
+
+        hours_dict = sorted(hours_dict.items())
+        x, y = zip(*hours_dict)
+
+        colors = []
+        for key in x:
+            if self.get_label(key)==1:
+                colors.append("red")
+            else:
+                colors.append("green")
+
+        ax = plt.subplot(111)
+        plt.bar(x,y, color = colors)
+        plt.xlabel("Speech Start of the Day (Only the Hour)")
+        plt.ylabel("Duration of Spoken Time in seconds")
+        plt.xticks(np.arange(0, 24, 2))
+
+        legend_elements = [Line2D([0], [0], marker='o', color='w', label='Sleep Deprivation',
+                                  markerfacecolor='r', markersize=15),
+                           Line2D([0], [0], marker='o', color='w', label='Normal',
+                                  markerfacecolor='g', markersize=15)]
+        ax.legend(handles=legend_elements, loc='upper right')
+        plt.savefig("graphs/meta_" + spkr_id + ".pdf")
+
+
+
 
 
 
