@@ -336,7 +336,7 @@ class DataSet:
             pickel_data = {"means_phoneme_list": means_list, "phoneme_list": phoneme_list, "oov_sd": oov_sd, "oov_n": oov_n}
             pickle.dump(pickel_data, open(self.ctm_id + "_" + str(int(use_mono_phone)) + "_" + str(int(use_sil)) + "_" + str(int(all_sils)) + ".pkl", "wb"))
 
-            return means_list
+            return means_list, phoneme_list
 
 
     def analyse_sil(self, all_sils):
@@ -356,7 +356,7 @@ class DataSet:
                 mean_duration_sd = np.mean(sd_list)
                 var_duration_n = np.var(n_list)
                 var_duration_sd = np.var(sd_list)
-                return mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
+                return n_list, sd_list, mean_duration_n, mean_duration_sd, var_duration_n, var_duration_sd
             else:
                 raise ValueError("run get_mean_of_all_phonemes() first!")
 
