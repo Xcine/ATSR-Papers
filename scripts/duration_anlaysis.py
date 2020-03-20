@@ -2,13 +2,20 @@ from dataset import DataSet
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+def pairwise(iterable,i2):
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    b = iter(i2)
+    return zip(a, a, b, b)
+
 path_utt2spk = "metadata/utt2spk"
 path_spk2gender = "metadata/spk2gender"
 path_segments = "metadata/segments"
 path_feats= "metadata/feats/feats.scp"
-#path_ctm = "metadata/ctm/allp_max_spkr.ctm" #ai
+path_ctm = "metadata/ctm/allp_max_spkr.ctm" #ai
 #path_ctm = "metadata/ctm/allp_train_max_spk_i2.ctm" #phb
-path_ctm = "metadata/ctm/allp_train_max_spk_i3.ctm" #ba
+#path_ctm = "metadata/ctm/allp_train_max_spk_i3.ctm" #ba
 
 ds = DataSet(path_spk2gender, path_segments, path_feats, path_ctm)
 
@@ -70,6 +77,17 @@ ax.set_xticklabels(["Phonemes n", "Phonemes sd"])
 plt.ylabel("Duration of Phonemes in Seconds")
 plt.ylim(0,0.2)
 plt.savefig("graphs/resbox_pho_BA.pdf")
+plt.close()
+
+for (n,sd,nk,sdk) in pairwise(box_value_list,box_key_list):
+    fig = plt.figure(1, figsize=(9, 6))
+    ax = fig.add_subplot(111)
+    bp = ax.boxplot([n, sd], showfliers=False)
+    ax.set_xticklabels([nk, sdk])
+    plt.ylabel("Duration of Phoneme in Seconds")
+    plt.ylim(0, 0.2)
+    plt.savefig("graphs/all_phonemes/AI/"+ nk +"_AI.pdf")
+    plt.close()
 
 # path_ctm = "metadata/ctm/allp_same_spkrs_5h.ctm"
 #
